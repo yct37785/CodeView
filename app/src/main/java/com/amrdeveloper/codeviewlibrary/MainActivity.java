@@ -9,6 +9,7 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
@@ -21,6 +22,7 @@ import com.chaquo.python.android.AndroidPlatform;
 
 import com.amrdeveloper.codeview.Code;
 import com.amrdeveloper.codeview.CodeView;
+import com.amrdeveloper.codeview.interfaces.TextChangeCallback;
 import com.amrdeveloper.codeviewlibrary.plugin.CommentManager;
 import com.amrdeveloper.codeviewlibrary.plugin.SourcePositionListener;
 import com.amrdeveloper.codeviewlibrary.plugin.UndoRedoManager;
@@ -44,10 +46,16 @@ public class MainActivity extends AppCompatActivity {
     private TextView languageNameText;
     private TextView sourcePositionText;
 
-    private LanguageName currentLanguage = LanguageName.JAVA;
+    private LanguageName currentLanguage = LanguageName.PYTHON;
     private ThemeName currentTheme = ThemeName.MONOKAI;
 
     private final boolean useModernAutoCompleteAdapter = true;
+
+    private TextChangeCallback textChangeCallback =
+            (CharSequence charSequence, int start, int count) -> {
+        CharSequence subSequence = charSequence.subSequence(start, start + count);
+        Log.d("CodeView", subSequence.toString());
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
 
         configCodeView();
         configCodeViewPlugins();
+        Log.d("CodeView", "CodeView onCreate");
     }
 
     private void configCodeView() {
@@ -94,6 +103,9 @@ public class MainActivity extends AppCompatActivity {
         codeView.setPairCompleteMap(pairCompleteMap);
         codeView.enablePairComplete(true);
         codeView.enablePairCompleteCenterCursor(true);
+
+        // listener for text change
+        codeView.setTextChangedCallback(textChangeCallback);
 
         // Setup the auto complete and auto indenting for the current language
         configLanguageAutoComplete();
