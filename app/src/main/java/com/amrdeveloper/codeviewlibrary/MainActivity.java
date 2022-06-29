@@ -16,6 +16,9 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
+
 import com.amrdeveloper.codeview.Code;
 import com.amrdeveloper.codeview.CodeView;
 import com.amrdeveloper.codeviewlibrary.plugin.CommentManager;
@@ -50,6 +53,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if (!Python.isStarted()) {
+            Python.start(new AndroidPlatform(this));
+        }
 
         configCodeView();
         configCodeViewPlugins();
