@@ -22,7 +22,6 @@ import com.chaquo.python.android.AndroidPlatform;
 
 import com.amrdeveloper.codeview.Code;
 import com.amrdeveloper.codeview.CodeView;
-import com.amrdeveloper.codeview.interfaces.TextChangeCallback;
 import com.amrdeveloper.codeviewlibrary.plugin.CommentManager;
 import com.amrdeveloper.codeviewlibrary.plugin.SourcePositionListener;
 import com.amrdeveloper.codeviewlibrary.plugin.UndoRedoManager;
@@ -46,16 +45,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView languageNameText;
     private TextView sourcePositionText;
 
+    private final TextChangeWatcher textChangeWatcher = new TextChangeWatcher();
+
     private LanguageName currentLanguage = LanguageName.PYTHON;
     private ThemeName currentTheme = ThemeName.MONOKAI;
 
     private final boolean useModernAutoCompleteAdapter = true;
-
-    private TextChangeCallback textChangeCallback =
-            (CharSequence charSequence, int start, int count) -> {
-        CharSequence subSequence = charSequence.subSequence(start, start + count);
-        Log.d("CodeView", subSequence.toString());
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
         codeView.enablePairCompleteCenterCursor(true);
 
         // listener for text change
-        codeView.setTextChangedCallback(textChangeCallback);
+        codeView.addTextChangedListener(textChangeWatcher);
 
         // Setup the auto complete and auto indenting for the current language
         configLanguageAutoComplete();
@@ -270,5 +265,23 @@ public class MainActivity extends AppCompatActivity {
 
         dialog.setOnDismissListener(c -> codeView.clearMatches());
         dialog.show();
+    }
+
+    private final class TextChangeWatcher implements TextWatcher {
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            CharSequence subSequence = s.subSequence(start, start + count);
+            Log.d("CodeView", subSequence.toString());
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+        }
     }
 }

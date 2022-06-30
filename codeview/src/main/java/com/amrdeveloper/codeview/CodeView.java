@@ -53,8 +53,6 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView;
 
-import com.amrdeveloper.codeview.interfaces.TextChangeCallback;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -112,8 +110,6 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
 
     private final SortedMap<Integer, Integer> mErrorHashSet = new TreeMap<>();
     private final Map<Pattern, Integer> mSyntaxPatternMap = new HashMap<>();
-
-    TextChangeCallback textChangeCallback = null;
 
     public CodeView(Context context) {
         super(context);
@@ -667,13 +663,6 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
         mPairCompleteMap.clear();
     }
 
-    /**
-     * On text updated callback
-     */
-    public void setTextChangedCallback(TextChangeCallback callback) {
-        textChangeCallback = callback;
-    }
-
     @Override
     public void showDropDown() {
         final Layout layout = getLayout();
@@ -749,8 +738,6 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
         @Override
         public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
             if (!modified) return;
-
-            textChangeCallback.func(charSequence, start, count);
 
             if(highlightWhileTextChanging) {
                 if (mSyntaxPatternMap.size() > 0) {
