@@ -31,17 +31,17 @@ public class UndoRedoManager {
         if (edit == null) return;
 
         Editable text = textView.getEditableText();
-        int start = edit.start;
-        int end = start + (edit.after != null ? edit.after.length() : 0);
+//        int start = edit.start;
+//        int end = start + (edit.after != null ? edit.after.length() : 0);
 
         isUndoOrRedo = true;
-        text.replace(start, end, edit.before);
+        text.replace(0, text.length(), edit.before);
         isUndoOrRedo = false;
 
         UnderlineSpan[] underlineSpans = text.getSpans(0, text.length(), UnderlineSpan.class);
         for (Object span : underlineSpans) text.removeSpan(span);
 
-        Selection.setSelection(text, edit.before == null ? start : (start + edit.before.length()));
+//        Selection.setSelection(text, edit.before == null ? start : (start + edit.before.length()));
     }
 
     public void redo() {
@@ -49,17 +49,17 @@ public class UndoRedoManager {
         if (edit == null) return;
 
         Editable text = textView.getEditableText();
-        int start = edit.start;
-        int end = start + (edit.before != null ? edit.before.length() : 0);
+//        int start = edit.start;
+//        int end = start + (edit.before != null ? edit.before.length() : 0);
 
         isUndoOrRedo = true;
-        text.replace(start, end, edit.after);
+        text.replace(0, text.length(), edit.after);
         isUndoOrRedo = false;
 
         UnderlineSpan[] underlineSpans = text.getSpans(0, text.length(), UnderlineSpan.class);
         for (Object span : underlineSpans) text.removeSpan(span);
 
-        Selection.setSelection(text, edit.after == null ? start : (start + edit.after.length()));
+//        Selection.setSelection(text, edit.after == null ? start : (start + edit.after.length()));
     }
 
     public void connect() {
@@ -170,84 +170,50 @@ public class UndoRedoManager {
     private final class TextChangeWatcher implements TextWatcher {
 
         EditNode toSaveNode = null;
+        private CharSequence full_beforeChange;
+        private CharSequence full_afterChange;
         private CharSequence beforeChange;
-        private CharSequence afterChange;
-        private CharSequence last_afterChange;
-        private ActionType lastActionType = ActionType.NOT_DEF;
+        private boolean isFirstAction = true;
 
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             if (isUndoOrRedo) return;
+            full_beforeChange = s.subSequence(0, s.length());
             beforeChange = s.subSequence(start, start + count);
         }
 
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             if (isUndoOrRedo) return;
-            boolean isFirstAction = last_afterChange == null;
-            last_afterChange = afterChange;
-            afterChange = s.subSequence(start, start + count);
-            if (isFirstAction) {
-                last_afterChange = afterChange;
-            }
-            Log.d("CodeView", "'" + beforeChange + "' -> '" + afterChange + "'");
+            full_afterChange = s.subSequence(0, s.length());
+            CharSequence afterChange = s.subSequence(start, start + count);
+//            Log.d("CodeView", "'" + beforeChange + "' -> '" + afterChange + "'");
             boolean isNewSequence = false;
             // on keypress
             if (Math.abs(afterChange.length() - beforeChange.length()) == 1) {
-                if (afterChange.length() > beforeChange.length()) {
-                    isNewSequence = !isFirstAction && afterChange.charAt(afterChange.length() - 1) == ' ';
-                } else {
-                    isNewSequence = afterChange.length() == 0;
-                }
+                isNewSequence = !isFirstAction && beforeChange.length() == 0;
+            } else {    // batch change
+                isNewSequence = true;
             }
-            if (beforeChange.length() == 0 && afterChange.length() == 0) {
-                isNewSequence = false;
-            }
+            isFirstAction = false;
             saveBatch(start, isNewSequence);
         }
 
         // save current batch to to-be-saved EditNode
         private void saveBatch(int start, boolean saveCurrentBatch) {
-            if (toSaveNode == null) {
-                toSaveNode = new EditNode(start, beforeChange, afterChange);
-            }
-            // always save the latest afterChange
-            toSaveNode.setAfter(afterChange);
             if (saveCurrentBatch) {
                 pushToEditHistory();
             }
+            if (toSaveNode == null) {
+                toSaveNode = new EditNode(start, full_beforeChange, full_afterChange);
+            }
+            // always save the latest afterChange
+            toSaveNode.setAfter(full_afterChange);
         }
 
         public void pushToEditHistory() {
             if (toSaveNode != null) {
                 editHistory.add(toSaveNode);
                 // set for new edit action
-                toSaveNode.printDetails();
                 toSaveNode = null;
-            }
-        }
-
-        private void makeBatch(int start) {
-            ActionType action = getActionType();
-            EditNode currentNode = editHistory.getCurrent();
-            if (lastActionType != action || ActionType.PASTE == action || currentNode == null) {
-                editHistory.add(new EditNode(start, beforeChange, afterChange));
-            } else {
-                if (action == ActionType.DELETE) {
-                    currentNode.start = start;
-                    currentNode.before = TextUtils.concat(beforeChange, currentNode.before);
-                } else {
-                    currentNode.after = TextUtils.concat(currentNode.after, afterChange);
-                }
-            }
-            lastActionType = action;
-        }
-
-        private ActionType getActionType() {
-            if (!TextUtils.isEmpty(beforeChange) && TextUtils.isEmpty(afterChange)) {
-                return ActionType.DELETE;
-            } else if (TextUtils.isEmpty(beforeChange) && !TextUtils.isEmpty(afterChange)) {
-                return ActionType.INSERT;
-            } else {
-                return ActionType.PASTE;
             }
         }
 
