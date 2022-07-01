@@ -5,10 +5,12 @@ import android.text.Selection;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.style.UnderlineSpan;
+import android.util.Log;
 import android.widget.TextView;
 
 import java.util.LinkedList;
 
+// Module taken from: https://stackoverflow.com/questions/14777593/android-textwatcher-saving-batches-of-similar-changes-for-undo-redo
 public class UndoRedoManager {
 
     private final TextView textView;
@@ -24,6 +26,7 @@ public class UndoRedoManager {
     }
 
     public void undo() {
+        textChangeWatcher.pushToEditHistory();
         EditNode edit = editHistory.getPrevious();
         if (edit == null) return;
 
@@ -146,16 +149,30 @@ public class UndoRedoManager {
             this.before = before;
             this.after = after;
         }
+
+        public void setAfter(CharSequence after) {
+            this.after = after;
+        }
+
+        public void printDetails() {
+            Log.d("CodeView", "Node: '" + before + "' -> '" + after + "'");
+        }
     }
 
     private enum ActionType {
         INSERT, DELETE, PASTE, NOT_DEF;
     }
 
+    /*
+    * TextWatcher defines change not by current key press but rather a sequence. We will utilize
+    * TextWatcher's logic and batch sequence into per edit action.
+     */
     private final class TextChangeWatcher implements TextWatcher {
 
+        EditNode toSaveNode = null;
         private CharSequence beforeChange;
         private CharSequence afterChange;
+        private CharSequence last_afterChange;
         private ActionType lastActionType = ActionType.NOT_DEF;
 
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -165,8 +182,47 @@ public class UndoRedoManager {
 
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             if (isUndoOrRedo) return;
+            boolean isFirstAction = last_afterChange == null;
+            last_afterChange = afterChange;
             afterChange = s.subSequence(start, start + count);
-            makeBatch(start);
+            if (isFirstAction) {
+                last_afterChange = afterChange;
+            }
+            Log.d("CodeView", "'" + beforeChange + "' -> '" + afterChange + "'");
+            boolean isNewSequence = false;
+            // on keypress
+            if (Math.abs(afterChange.length() - beforeChange.length()) == 1) {
+                if (afterChange.length() > beforeChange.length()) {
+                    isNewSequence = !isFirstAction && afterChange.charAt(afterChange.length() - 1) == ' ';
+                } else {
+                    isNewSequence = afterChange.length() == 0;
+                }
+            }
+            if (beforeChange.length() == 0 && afterChange.length() == 0) {
+                isNewSequence = false;
+            }
+            saveBatch(start, isNewSequence);
+        }
+
+        // save current batch to to-be-saved EditNode
+        private void saveBatch(int start, boolean saveCurrentBatch) {
+            if (toSaveNode == null) {
+                toSaveNode = new EditNode(start, beforeChange, afterChange);
+            }
+            // always save the latest afterChange
+            toSaveNode.setAfter(afterChange);
+            if (saveCurrentBatch) {
+                pushToEditHistory();
+            }
+        }
+
+        public void pushToEditHistory() {
+            if (toSaveNode != null) {
+                editHistory.add(toSaveNode);
+                // set for new edit action
+                toSaveNode.printDetails();
+                toSaveNode = null;
+            }
         }
 
         private void makeBatch(int start) {
@@ -196,6 +252,7 @@ public class UndoRedoManager {
         }
 
         public void afterTextChanged(Editable s) {
+
         }
     }
 }

@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
@@ -57,9 +58,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (!Python.isStarted()) {
-            Python.start(new AndroidPlatform(this));
-        }
+//        if (!Python.isStarted()) {
+//            Python.start(new AndroidPlatform(this));
+//        }
 
         configCodeView();
         configCodeViewPlugins();
@@ -68,6 +69,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void configCodeView() {
         codeView = findViewById(R.id.codeView);
+
+        // turn off auto caps
+        codeView.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 
         // Change default font to JetBrains Mono font
         Typeface jetBrainsMono = ResourcesCompat.getFont(this, R.font.jetbrains_mono_medium);
@@ -277,7 +281,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             CharSequence subSequence = s.subSequence(start, start + count);
-            Log.d("CodeView", subSequence.toString());
+//            Log.d("CodeView", subSequence.toString());
         }
 
         @Override

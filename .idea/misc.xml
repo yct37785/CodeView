@@ -13,6 +13,14 @@
       </map>
     </option>
   </component>
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Users/yctan/Desktop/PythonIDEApp/CodeView/app/src/main/res/drawable/ic_find_replace.xml" value="0.175" />
+        <entry key="..\:/Users/yctan/Desktop/PythonIDEApp/CodeView/app/src/main/res/layout/activity_main.xml" value="0.23072916666666668" />
+      </map>
+    </option>
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_16" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
