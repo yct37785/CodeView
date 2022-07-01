@@ -159,10 +159,6 @@ public class UndoRedoManager {
         }
     }
 
-    private enum ActionType {
-        INSERT, DELETE, PASTE, NOT_DEF;
-    }
-
     /*
     * TextWatcher defines change not by current key press but rather a sequence. We will utilize
     * TextWatcher's logic and batch sequence into per edit action.
@@ -186,7 +182,7 @@ public class UndoRedoManager {
             full_afterChange = s.subSequence(0, s.length());
             CharSequence afterChange = s.subSequence(start, start + count);
 //            Log.d("CodeView", "'" + beforeChange + "' -> '" + afterChange + "'");
-            boolean isNewSequence = false;
+            boolean isNewSequence;
             // on keypress
             if (Math.abs(afterChange.length() - beforeChange.length()) == 1) {
                 isNewSequence = !isFirstAction && beforeChange.length() == 0;
