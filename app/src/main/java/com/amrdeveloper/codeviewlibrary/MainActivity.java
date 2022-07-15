@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         codeView = findViewById(R.id.codeView);
 
         // turn off auto caps
-        codeView.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        codeView.setRawInputType(InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
 
         // Change default font to JetBrains Mono font
         Typeface jetBrainsMono = ResourcesCompat.getFont(this, R.font.jetbrains_mono_medium);
