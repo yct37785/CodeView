@@ -18,6 +18,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.amrdeveloper.codeview.Keyword;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
 
@@ -31,12 +32,19 @@ import com.amrdeveloper.codeviewlibrary.syntax.LanguageName;
 import com.amrdeveloper.codeviewlibrary.syntax.LanguageManager;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
+
+    private final int AUTO_COMPLETE_BOUNCE_MS = 100;
 
     private CodeView codeView;
     private LanguageManager languageManager;
@@ -52,6 +60,11 @@ public class MainActivity extends AppCompatActivity {
     private ThemeName currentTheme = ThemeName.MONOKAI;
 
     private final boolean useModernAutoCompleteAdapter = true;
+
+    private int cursor_line, cursor_col;
+    private String currentCode = "";
+    private ScheduledExecutorService autoCompleteService = Executors.newSingleThreadScheduledExecutor();
+    private Future<?> autoCompleteFuture = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         codeView.addTextChangedListener(textChangeWatcher);
 
         // Setup the auto complete and auto indenting for the current language
-        configLanguageAutoComplete();
+//        configLanguageAutoComplete();
         configLanguageAutoIndentation();
     }
 
@@ -169,6 +182,8 @@ public class MainActivity extends AppCompatActivity {
         SourcePositionListener sourcePositionListener = new SourcePositionListener(codeView);
         sourcePositionListener.setOnPositionChanged((line, column) -> {
             sourcePositionText.setText(getString(R.string.source_position, line, column));
+            cursor_line = line;
+            cursor_col = column;
         });
     }
 
@@ -273,6 +288,11 @@ public class MainActivity extends AppCompatActivity {
 
     private final class TextChangeWatcher implements TextWatcher {
 
+        private Runnable runAutoComplete = () -> {
+//            Log.d("CodeView", "Cursor pos: " + cursor_line + ", " + cursor_col);
+            Log.d("CodeView", currentCode);
+        };
+
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -280,8 +300,12 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            CharSequence subSequence = s.subSequence(start, start + count);
-//            Log.d("CodeView", subSequence.toString());
+            currentCode = s.toString();
+            if (autoCompleteFuture != null) {
+                autoCompleteFuture.cancel(true);
+            }
+            autoCompleteFuture = autoCompleteService.schedule(runAutoComplete, AUTO_COMPLETE_BOUNCE_MS,
+                    TimeUnit.MILLISECONDS);
         }
 
         @Override
