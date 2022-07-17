@@ -19,6 +19,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.amrdeveloper.codeview.Keyword;
+import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
 
@@ -44,7 +45,7 @@ import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final int AUTO_COMPLETE_BOUNCE_MS = 100;
+    private final int AUTO_COMPLETE_BOUNCE_MS = 200;
 
     private CodeView codeView;
     private LanguageManager languageManager;
@@ -66,17 +67,21 @@ public class MainActivity extends AppCompatActivity {
     private ScheduledExecutorService autoCompleteService = Executors.newSingleThreadScheduledExecutor();
     private Future<?> autoCompleteFuture = null;
 
+    private Python py;
+    private PyObject jedi;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-//        if (!Python.isStarted()) {
-//            Python.start(new AndroidPlatform(this));
-//        }
+        if (!Python.isStarted()) {
+            Python.start(new AndroidPlatform(this));
+        }
 
         configCodeView();
         configCodeViewPlugins();
+        configPython();
         Log.d("CodeView", "CodeView onCreate");
     }
 
@@ -121,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Setup the auto complete and auto indenting for the current language
 //        configLanguageAutoComplete();
+        configAutoCompleteUI();
         configLanguageAutoIndentation();
     }
 
@@ -147,6 +153,9 @@ public class MainActivity extends AppCompatActivity {
             // Add the ArrayAdapter to the CodeView
             codeView.setAdapter(adapter);
         }
+    }
+
+    private void configAutoCompleteUI() {
     }
 
     private void configLanguageAutoIndentation() {
@@ -183,8 +192,13 @@ public class MainActivity extends AppCompatActivity {
         sourcePositionListener.setOnPositionChanged((line, column) -> {
             sourcePositionText.setText(getString(R.string.source_position, line, column));
             cursor_line = line;
-            cursor_col = column;
+            cursor_col = Math.max(0, column - 1);
         });
+    }
+
+    private void configPython() {
+        py = Python.getInstance();
+        jedi = py.getModule("jedi");
     }
 
     @Override
@@ -289,8 +303,11 @@ public class MainActivity extends AppCompatActivity {
     private final class TextChangeWatcher implements TextWatcher {
 
         private Runnable runAutoComplete = () -> {
-//            Log.d("CodeView", "Cursor pos: " + cursor_line + ", " + cursor_col);
-            Log.d("CodeView", currentCode);
+            autoCompleteFuture = null;
+            PyObject script = jedi.callAttr("Script", currentCode);
+            PyObject completions = script.callAttr("complete", cursor_line, cursor_col);
+            Log.d("CodeView", "Completions: " + completions.toString());
+//            Log.d("CodeView", currentCode);
         };
 
         @Override

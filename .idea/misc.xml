@@ -18,6 +18,8 @@
       <map>
         <entry key="..\:/Users/yctan/Desktop/PythonIDEApp/CodeView/app/src/main/res/drawable/ic_find_replace.xml" value="0.175" />
         <entry key="..\:/Users/yctan/Desktop/PythonIDEApp/CodeView/app/src/main/res/layout/activity_main.xml" value="0.23072916666666668" />
+        <entry key="..\:/Users/yctan/Desktop/PythonIDEApp/CodeView/app/src/main/res/layout/list_item_modern_autocomplete.xml" value="0.21822916666666667" />
+        <entry key="..\:/Users/yctan/Desktop/PythonIDEApp/CodeView/app/src/main/res/layout/list_item_suggestion.xml" value="0.21822916666666667" />
       </map>
     </option>
   </component>
