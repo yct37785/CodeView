@@ -783,8 +783,12 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
                 }
             }
             if (!indentationCalculated) {
+                boolean lastCharNewLine = charSequence.charAt(charSequence.length() - 1) == '\n';
                 String[] ss = charSequence.toString().split("\n");
-                if (ss.length >= 1) {
+                if (lastCharNewLine) {
+                    currentIndentation = 0;
+                    Log.d("CodeView", "Not indent, currLineIndent: " + currentIndentation);
+                } else if (ss.length >= 1) {
                     // count trailing white spaces
                     String currLine = ss[ss.length - 1];
                     char lastChr = currLine.charAt(currLine.length() - 1);
