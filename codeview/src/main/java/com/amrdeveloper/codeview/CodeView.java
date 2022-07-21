@@ -730,6 +730,7 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
 
         private int start;
         private int count;
+        private int lineCount = 1;
 
         @Override
         public void beforeTextChanged(CharSequence charSequence, int start, int before, int count) {
@@ -750,24 +751,17 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
 
             if (mRemoveErrorsWhenTextChanged) removeAllErrorLines();
 
+            boolean indentationCalculated = false;
             if (count == 1 && (enableAutoIndentation || enablePairComplete)) {
                 char currentChar = charSequence.charAt(start);
 
                 if (enableAutoIndentation) {
                     if (indentationStarts.contains(currentChar)) {
                         // check the indentation level of this line then +1 to indent
-                        String charSequenceStr = charSequence.toString();
-                        int lastIdxOf = charSequenceStr.lastIndexOf('\n');
-                        if (lastIdxOf != -1) {
-                            // count spaces
-                            int i = 0;
-                            while (charSequenceStr.substring(lastIdxOf + 1).charAt(i) == ' ') i += 1;
-                            currentIndentation = i + tabLength;
-                        } else {    // first line
-                            currentIndentation = tabLength;
-                        }
+                        currentIndentation = getPreviousIndent(charSequence.toString()) + tabLength;
                     } else if (indentationEnds.contains(currentChar))
                         currentIndentation -= tabLength;
+                    indentationCalculated = true;
                 }
 
                 if (enablePairComplete) {
@@ -782,8 +776,31 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
                                 currentIndentation += tabLength;
                             else if (indentationEnds.contains(pairValue))
                                 currentIndentation -= tabLength;
+                            indentationCalculated = true;
                         }
                         modified = true;
+                    }
+                }
+            }
+            if (!indentationCalculated) {
+                String[] ss = charSequence.toString().split("\n");
+                if (ss.length >= 1) {
+                    // count trailing white spaces
+                    String currLine = ss[ss.length - 1];
+                    char lastChr = currLine.charAt(currLine.length() - 1);
+                    if (!indentationStarts.contains(lastChr)) {
+                        if (currLine.length() > 0) {
+                            int currLineIndent = 0;
+                            for (int i = 0; i < currLine.length(); ++i) {
+                                if (currLine.charAt(i) == ' ') {
+                                    currLineIndent++;
+                                } else {
+                                    break;
+                                }
+                            }
+                            currentIndentation = currLineIndent;
+                            Log.d("CodeView", "Not indent, currLineIndent: " + currLineIndent);
+                        }
                     }
                 }
             }
@@ -800,6 +817,19 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
                     convertTabs(getEditableText(), start, count);
                     mUpdateHandler.postDelayed(mUpdateRunnable, mUpdateDelayTime);
                 }
+            }
+        }
+
+        private int getPreviousIndent(String charSequenceStr) {
+            int lastIdxOf = charSequenceStr.lastIndexOf('\n');
+            if (lastIdxOf != -1) {
+//                Log.d("CodeView", "lastIdxOf: " + lastIdxOf + ", len: " + charSequenceStr.length());
+                int i = 0;
+                String ss = charSequenceStr.substring(lastIdxOf + 1);
+                while (i < ss.length() && ss.charAt(i) == ' ') i += 1;
+                return i;
+            } else {
+                return 0;
             }
         }
     };
