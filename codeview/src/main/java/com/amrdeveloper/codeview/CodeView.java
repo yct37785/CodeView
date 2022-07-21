@@ -707,6 +707,7 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
         }
     };
 
+    // !! will never be called when using soft keyboards
     private final OnKeyListener mOnKeyListener = new OnKeyListener() {
 
         @Override
@@ -753,9 +754,19 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
                 char currentChar = charSequence.charAt(start);
 
                 if (enableAutoIndentation) {
-                    if (indentationStarts.contains(currentChar))
-                        currentIndentation += tabLength;
-                    else if (indentationEnds.contains(currentChar))
+                    if (indentationStarts.contains(currentChar)) {
+                        // check the indentation level of this line then +1 to indent
+                        String charSequenceStr = charSequence.toString();
+                        int lastIdxOf = charSequenceStr.lastIndexOf('\n');
+                        if (lastIdxOf != -1) {
+                            // count spaces
+                            int i = 0;
+                            while (charSequenceStr.substring(lastIdxOf + 1).charAt(i) == ' ') i += 1;
+                            currentIndentation = i + tabLength;
+                        } else {    // first line
+                            currentIndentation = tabLength;
+                        }
+                    } else if (indentationEnds.contains(currentChar))
                         currentIndentation -= tabLength;
                 }
 

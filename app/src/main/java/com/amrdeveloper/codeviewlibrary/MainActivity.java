@@ -75,14 +75,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (!Python.isStarted()) {
-            Python.start(new AndroidPlatform(this));
-        }
+//        if (!Python.isStarted()) {
+//            Python.start(new AndroidPlatform(this));
+//        }
 
         configCodeView();
         configCodeViewPlugins();
-        configPython();
-        Log.d("CodeView", "CodeView onCreate");
+//        configPython();
+//        Log.d("CodeView", "CodeView onCreate");
     }
 
     private void configCodeView() {
@@ -303,10 +303,10 @@ public class MainActivity extends AppCompatActivity {
     private final class TextChangeWatcher implements TextWatcher {
 
         private Runnable runAutoComplete = () -> {
-            autoCompleteFuture = null;
-            PyObject script = jedi.callAttr("Script", currentCode);
-            PyObject completions = script.callAttr("complete", cursor_line, cursor_col);
-            Log.d("CodeView", "Completions: " + completions.toString());
+//            autoCompleteFuture = null;
+//            PyObject script = jedi.callAttr("Script", currentCode);
+//            PyObject completions = script.callAttr("complete", cursor_line, cursor_col);
+//            Log.d("CodeView", "Completions: " + completions.toString());
 //            Log.d("CodeView", currentCode);
         };
 
