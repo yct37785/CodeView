@@ -715,22 +715,47 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
             if (!enableAutoIndentation) return false;
             switch (keyCode) {
                 case KeyEvent.KEYCODE_SPACE:
-                    currentIndentation++;
+//                    currentIndentation++;
                     break;
                 case KeyEvent.KEYCODE_DEL:
-                    if (currentIndentation > 0)
-                        currentIndentation--;
+//                    if (currentIndentation > 0)
+//                        currentIndentation--;
                     break;
             }
             return false;
         }
     };
 
+    private static int getIndent(String charSequence) {
+        int currIndent = 0;
+        // if no newline: start from 0
+        // has newline: start from next char
+        int i = charSequence.lastIndexOf("\n") + 1;
+        while (i < charSequence.length() && charSequence.charAt(i) == ' ') {
+            i++;
+            currIndent++;
+        }
+        return currIndent;
+    }
+
+    @Override
+    protected void onSelectionChanged(int selStart, int selEnd) {
+        super.onSelectionChanged(selStart, selEnd);
+        String charSequence = getText().toString().substring(0, selStart);
+        currentIndentation = getIndent(charSequence);
+        if (charSequence.length() > 0 &&
+                indentationStarts.contains(charSequence.charAt(charSequence.length() - 1))) {
+//            Log.d("CodeView", "Add indent");
+            currentIndentation += tabLength;
+        }
+//        Log.d("CodeView", "indent: " + currentIndentation);
+//        Log.d("CodeView", "charSequence: " + charSequence);
+    }
+
     private final TextWatcher mEditorTextWatcher = new TextWatcher() {
 
         private int start;
         private int count;
-        private int lineCount = 1;
 
         @Override
         public void beforeTextChanged(CharSequence charSequence, int start, int before, int count) {
@@ -751,17 +776,14 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
 
             if (mRemoveErrorsWhenTextChanged) removeAllErrorLines();
 
-            boolean indentationCalculated = false;
             if (count == 1 && (enableAutoIndentation || enablePairComplete)) {
                 char currentChar = charSequence.charAt(start);
 
                 if (enableAutoIndentation) {
-                    if (indentationStarts.contains(currentChar)) {
-                        // check the indentation level of this line then +1 to indent
-                        currentIndentation = getPreviousIndent(charSequence.toString()) + tabLength;
-                    } else if (indentationEnds.contains(currentChar))
-                        currentIndentation -= tabLength;
-                    indentationCalculated = true;
+//                    if (indentationStarts.contains(currentChar)) {
+//                        currentIndentation += tabLength;
+//                    } else if (indentationEnds.contains(currentChar))
+//                        currentIndentation -= tabLength;
                 }
 
                 if (enablePairComplete) {
@@ -772,39 +794,12 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
                         getText().insert(selectionEnd, pairValue.toString());
                         if (enablePairCompleteCenterCursor) setSelection(selectionEnd);
                         if (enableAutoIndentation) {
-                            if (indentationStarts.contains(pairValue))
-                                currentIndentation += tabLength;
-                            else if (indentationEnds.contains(pairValue))
-                                currentIndentation -= tabLength;
-                            indentationCalculated = true;
+//                            if (indentationStarts.contains(pairValue))
+//                                currentIndentation += tabLength;
+//                            else if (indentationEnds.contains(pairValue))
+//                                currentIndentation -= tabLength;
                         }
                         modified = true;
-                    }
-                }
-            }
-            if (!indentationCalculated) {
-                boolean lastCharNewLine = charSequence.charAt(charSequence.length() - 1) == '\n';
-                String[] ss = charSequence.toString().split("\n");
-                if (lastCharNewLine) {
-                    currentIndentation = 0;
-                    Log.d("CodeView", "Not indent, currLineIndent: " + currentIndentation);
-                } else if (ss.length >= 1) {
-                    // count trailing white spaces
-                    String currLine = ss[ss.length - 1];
-                    char lastChr = currLine.charAt(currLine.length() - 1);
-                    if (!indentationStarts.contains(lastChr)) {
-                        if (currLine.length() > 0) {
-                            int currLineIndent = 0;
-                            for (int i = 0; i < currLine.length(); ++i) {
-                                if (currLine.charAt(i) == ' ') {
-                                    currLineIndent++;
-                                } else {
-                                    break;
-                                }
-                            }
-                            currentIndentation = currLineIndent;
-                            Log.d("CodeView", "Not indent, currLineIndent: " + currLineIndent);
-                        }
                     }
                 }
             }
@@ -821,19 +816,6 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
                     convertTabs(getEditableText(), start, count);
                     mUpdateHandler.postDelayed(mUpdateRunnable, mUpdateDelayTime);
                 }
-            }
-        }
-
-        private int getPreviousIndent(String charSequenceStr) {
-            int lastIdxOf = charSequenceStr.lastIndexOf('\n');
-            if (lastIdxOf != -1) {
-//                Log.d("CodeView", "lastIdxOf: " + lastIdxOf + ", len: " + charSequenceStr.length());
-                int i = 0;
-                String ss = charSequenceStr.substring(lastIdxOf + 1);
-                while (i < ss.length() && ss.charAt(i) == ' ') i += 1;
-                return i;
-            } else {
-                return 0;
             }
         }
     };
@@ -860,17 +842,20 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
                                    Spanned dest, int dStart, int dEnd) {
             if (modified && enableAutoIndentation && start < source.length()) {
                 if (source.charAt(start) == '\n') {
-                    // Apply the current indentation if it inserted at the end
-                    if (dest.length() == dEnd) return applyIndentation(source, currentIndentation);
+//                    // Apply the current indentation if it inserted at the end
+//                    if (dest.length() == dEnd) return applyIndentation(source, currentIndentation);
 
-                    // reCalculate the current indentation
-                    int indentation = calculateSourceIndentation(dest.subSequence(0, dStart));
+//                    // reCalculate the current indentation
+//                    int indentation = calculateSourceIndentation(dest.subSequence(0, dStart));
+//
+//                    // Decrement the indentation if the next char is on indentationEnds set
+//                    if (indentationEnds.contains(dest.charAt(dEnd))) indentation -= tabLength;
+//
+//                    // Apply the new indentation to the source code
+//                    return applyIndentation(source, indentation);
 
-                    // Decrement the indentation if the next char is on indentationEnds set
-                    if (indentationEnds.contains(dest.charAt(dEnd))) indentation -= tabLength;
-
-                    // Apply the new indentation to the source code
-                    return applyIndentation(source, indentation);
+                    // our indentation is the accurate ver
+                    return applyIndentation(source, currentIndentation);
                 }
             }
             return source;
